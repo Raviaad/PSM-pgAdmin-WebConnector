@@ -1,8 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   CyberArk PSM Connection Component for pgAdmin 4
-  Authentication: Local (form-based, postgres/pgAdmin user)
-  pgAdmin version: 4.x (default port 5050)
+  Type:           Desktop application (installed pgAdmin4.exe)
+  Authentication: Local form-based (pgAdmin email + password)
+  pgAdmin version: 4.x (installed on Windows)
+
+  IMPORTANT: This connector launches pgAdmin4.exe directly.
+  pgAdmin installed app runs its own internal web server and opens
+  in a bundled Chromium window - NOT Google Chrome.
+  Protocol="Chrome" here is a PSM session type classifier only.
 
   How to import:
     1. Compress this file into a .zip named CC-pgAdmin4-web.zip
@@ -17,18 +23,24 @@
            Path="C:\Program Files (x86)\CyberArk\PSM\Components\pgAdmin4-web_PSM.exe"
            Method="Hash" />
 
+  CyberArk Account Field Mapping:
+    Username  = pgAdmin login email address (e.g. admin@admin.com)
+    Password  = pgAdmin login password
+    Address   = NOT required (pgAdmin4.exe is launched locally on the PSM)
+
   Notes:
-  - The Address field on the CyberArk account should be the pgAdmin host only
-    e.g. "localhost" or "10.0.0.5" (port and path are added by the .au3 script)
-  - Username field must contain the pgAdmin login email (e.g. admin@admin.com)
-    OR the postgres OS username depending on your pgAdmin setup
-  - For local pgAdmin auth (not LDAP, not OAuth), ensure pgAdmin Server Mode
-    is enabled and a master password or login is configured
+    - Username field must contain the pgAdmin login EMAIL address
+      e.g. admin@admin.com  (this is what pgAdmin local auth requires)
+    - For local pgAdmin auth (not LDAP, not OAuth), ensure pgAdmin Server Mode
+      is enabled. Disable the master password prompt in pgAdmin Preferences
+      to prevent a secondary dialog blocking automated login.
+    - Update $PGADMIN_EXE in the .au3 file to match your installed pgAdmin version path
+      e.g. C:\Program Files\pgAdmin 4\v8\runtime\pgAdmin4.exe
 -->
 <ConnectionComponents>
   <ConnectionComponent
     Id="pgAdmin4-web"
-    DisplayName="pgAdmin 4 - PostgreSQL Web"
+    DisplayName="pgAdmin 4 - PostgreSQL Desktop"
     FullScreen="No"
     Height="900"
     Width="1440"
@@ -56,11 +68,12 @@
       ConnectionComponentInitTimeout="90000">
 
       <ClientSpecific>
-        <!-- Time (seconds) for each AutoIT action to complete -->
+        <!-- Time (seconds) for each AutoIT action step to complete -->
         <Parameter Name="ActionTimeout" Value="15" />
-        <!-- Time (seconds) to wait for pgAdmin page to fully load -->
-        <Parameter Name="PageLoadTimeout" Value="45" />
-        <!-- Run built-in validations -->
+        <!-- Time (seconds) to wait for pgAdmin to fully launch and render login form.
+             Increase on slow machines. pgAdmin startup can take 20-60 seconds. -->
+        <Parameter Name="PageLoadTimeout" Value="60" />
+        <!-- Run built-in PSM validations -->
         <Parameter Name="RunValidations" Value="Yes" />
         <!-- Milliseconds to wait before hiding command-line parameters (credentials) -->
         <Parameter Name="WaitBeforeCmdlineParmsHide" Value="20000" />
@@ -70,10 +83,12 @@
         <Parameter Name="EnableTrace" Value="Yes" />
       </ClientSpecific>
 
-      <!-- Lock to the Chrome window; set Enable="Yes" for strict window locking -->
+      <!-- LockAppWindow: set Enable="Yes" and update MainWindowClass to the
+           pgAdmin4.exe window class if you want strict window locking.
+           Leave Enable="No" during initial testing. -->
       <LockAppWindow
         Enable="No"
-        MainWindowClass="::DesktopWindow"
+        MainWindowClass="Chrome_WidgetWin_1"
         Timeout="800000"
         SearchWindowWaitTimeout="30" />
 
@@ -81,7 +96,7 @@
         <!-- Record Windows UI events -->
         <Capability Id="WindowsEventsAudit" />
         <Capability Id="WindowsEventsTextRecorder" />
-        <!-- Record keystrokes (captures pgAdmin SQL queries typed) -->
+        <!-- Record keystrokes (captures SQL queries and typed input) -->
         <Capability Id="KeystrokesAudit" />
         <Capability Id="KeystrokesTextRecorder" />
       </Capabilities>
