@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  CyberArk PSM Connection Component for pgAdmin 4
+  Authentication: Local (form-based, postgres/pgAdmin user)
+  pgAdmin version: 4.x (default port 5050)
+
+  How to import:
+    1. Compress this file into a .zip named CC-pgAdmin4-web.zip
+       (the zip name MUST start with CC-)
+    2. Import via psPAS:
+         Import-PASConnectionComponent .\CC-pgAdmin4-web.zip
+    3. Assign this connection component to your PostgreSQL platform
+    4. Ensure pgAdmin4-web_PSM.exe is compiled and placed in:
+         C:\Program Files (x86)\CyberArk\PSM\Components\
+    5. Add the exe to AppLocker:
+         <Application Name="pgAdmin4-web_PSM" Type="Exe"
+           Path="C:\Program Files (x86)\CyberArk\PSM\Components\pgAdmin4-web_PSM.exe"
+           Method="Hash" />
+
+  Notes:
+  - The Address field on the CyberArk account should be the pgAdmin host only
+    e.g. "localhost" or "10.0.0.5" (port and path are added by the .au3 script)
+  - Username field must contain the pgAdmin login email (e.g. admin@admin.com)
+    OR the postgres OS username depending on your pgAdmin setup
+  - For local pgAdmin auth (not LDAP, not OAuth), ensure pgAdmin Server Mode
+    is enabled and a master password or login is configured
+-->
+<ConnectionComponents>
+  <ConnectionComponent
+    Id="pgAdmin4-web"
+    DisplayName="pgAdmin 4 - PostgreSQL Web"
+    FullScreen="No"
+    Height="900"
+    Width="1440"
+    EnableWindowScrollbar="No"
+    EnableToolbars="No"
+    Type="CyberArk.PasswordVault.TransparentConnection.PSM.PSMConnectionComponent, CyberArk.PasswordVault.TransparentConnection.PSM">
+
+    <ComponentParameters />
+
+    <UserParameters>
+      <Parameter
+        Name="AllowMappingLocalDrives"
+        Type="CyberArk.TransparentConnection.BooleanUserParameter, CyberArk.PasswordVault.TransparentConnection"
+        Value="No"
+        Visible="Yes"
+        Required="No"
+        EnforceInDualControlRequest="No" />
+    </UserParameters>
+
+    <TargetSettings
+      Protocol="Chrome"
+      ClientApp="dummy.exe"
+      ClientDispatcher="&quot;{PSMComponentsFolder}\pgAdmin4-web_PSM.exe&quot; &quot;{PSMComponentsFolder}&quot;"
+      ClientInvokeType="Dispatcher"
+      ConnectionComponentInitTimeout="90000">
+
+      <ClientSpecific>
+        <!-- Time (seconds) for each AutoIT action to complete -->
+        <Parameter Name="ActionTimeout" Value="15" />
+        <!-- Time (seconds) to wait for pgAdmin page to fully load -->
+        <Parameter Name="PageLoadTimeout" Value="45" />
+        <!-- Run built-in validations -->
+        <Parameter Name="RunValidations" Value="Yes" />
+        <!-- Milliseconds to wait before hiding command-line parameters (credentials) -->
+        <Parameter Name="WaitBeforeCmdlineParmsHide" Value="20000" />
+        <!-- Milliseconds timeout for hiding command-line parameters -->
+        <Parameter Name="CmdLineParmsHideTimeout" Value="30000" />
+        <!-- Enable detailed trace logging for troubleshooting -->
+        <Parameter Name="EnableTrace" Value="Yes" />
+      </ClientSpecific>
+
+      <!-- Lock to the Chrome window; set Enable="Yes" for strict window locking -->
+      <LockAppWindow
+        Enable="No"
+        MainWindowClass="::DesktopWindow"
+        Timeout="800000"
+        SearchWindowWaitTimeout="30" />
+
+      <Capabilities>
+        <!-- Record Windows UI events -->
+        <Capability Id="WindowsEventsAudit" />
+        <Capability Id="WindowsEventsTextRecorder" />
+        <!-- Record keystrokes (captures pgAdmin SQL queries typed) -->
+        <Capability Id="KeystrokesAudit" />
+        <Capability Id="KeystrokesTextRecorder" />
+      </Capabilities>
+
+    </TargetSettings>
+  </ConnectionComponent>
+</ConnectionComponents>
